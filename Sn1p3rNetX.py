@@ -9,7 +9,6 @@ from datetime import datetime
 from pyfiglet import Figlet
 from rich.console import Console
 
-
 console = Console()
 log_file = f"logs/scan_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.log"
 CACHE_FILE = ".mac_cache.json"
@@ -192,7 +191,6 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         
     return final_os_guess
         
-        
 def scan_target(ip,mode='tcp',aggressive=True):
     scanner = nmap.PortScanner()
 
@@ -237,8 +235,6 @@ def main():
     test_ip = console.input("Enter IP : ")
     mode=input("Enter a mode :")
     scan_target(test_ip,mode,1)
-    
-    
     
 if __name__== "__main__":
     main()
