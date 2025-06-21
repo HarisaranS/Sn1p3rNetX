@@ -190,6 +190,50 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         final_os_guess += f"\nMac Prefix guess : {mac_guess}"
         
     return final_os_guess
+
+def suggest_exploit(service_str):
+    base = {
+    "ftp":"Brute-force / CVE-2024-4040 (CrushFTP zero-day), CVE-2024-7264 (Cerberus FTP cURL), CVE-2021-41653 (vsftpd backdoor)",
+    "ssh":"CVE-2024-6387 (OpenSSH regreSSHion RCE) :contentReference[oaicite:1]{index=1}, CVE-2023-48795 (Terrapin), CVE-2024-3544 (SFTPGo bypass), CVE-2018-15473 (User enum)",
+    "telnet":"Default creds / CVE-2015-5600 (OpenSSH KI-bypass), watch for legacy IoT exposures",
+    "http":"CVE-2024-40725 (Apache source disclosure), CVE-2024-40898 (Windows SSRF), CVE-2021-5638 (Apache Struts RCE), CORS/HSTS misconfiguration :contentReference[oaicite:2]{index=2}",
+    "https":"CVE-2022-0778 (OpenSSL DOS), TLS downgrade, CVE-2024-38472 (Windows UNC SSRF) :contentReference[oaicite:3]{index=3}",
+    "apache":"CVE-2024-40725 (source disclosure), CVE-2024-40898 (SSRF) :contentReference[oaicite:4]{index=4}",
+    "nginx":"CVE-2021-23017 (resolver heap overflow), CVE-2013-2028 (chunked overflow)",
+    "smb":"MS17-010 (EternalBlue), CVE-2020-0796 (SMBGhost), CVE-2021-36942 (PrintNightmare)",
+    "mysql":"CVE-2012-2122 (Auth bypass), CVE-2021-27928 (Config injection), default 'root' login",
+    "mssql":"CVE-2022-35829 (SQL Server privilege misuse), brute-force, xp_cmdshell RCE",
+    "rdp":"CVE-2019-0708 (BlueKeep), CVE-2020-0609/0610 (Gateway RCE)",
+    "vnc":"Weak creds / CVE-2022-24990 (unauth access)",
+    "exchange":"ProxyLogon CVE-2021-26855, ProxyShell CVE-2021-34473",
+    "spring":"CVE-2022-22965 (Spring4Shell RCE)",
+    "ssh-service":"CVE-2024-6387 (OpenSSH RCE) :contentReference[oaicite:5]{index=5}",
+    "dahua":"CVE-2017-7921 (backdoor creds)",
+    "hikvision":"CVE-2021-36260 (command injection)",
+    "fortinet":"CVE-2018-13379 (Path traversal)",
+    "sonicwall":"CVE-2021-20016 (SSLVPN SQLi)",
+    "vpn":"CVE-2023-46805 & CVE-2024-21887 (Ivanti VPN chain) :contentReference[oaicite:6]{index=6}, CVE-2019-11510 (Pulse), CVE-2018-13379 (Fortinet)",
+    "cisco":"CVE-2020-3452 (Path traversal), CVE-2020-3187 (conf overwrite), CVE-2019-15271 (RCE)",
+    "wordpress":"CVE-2022-21661 (object injection), XML-RPC brute, vulnerable plugins/themes",
+    "drupal":"CVE-2018-7600 (Drupalgeddon2), CVE-2019-6340 (RCE)",
+    "joomla":"CVE-2015-8562 (User-Agent RCE), CVE-2019-18674 (SQLi)",
+    "git":"CVE-2018-11235 (path traversal), CVE-2022-24765 (repo config), exposed .git",
+    "redis":"Unauth RCE (cron/ssh), CVE-2022-0543 (Lua sandbox)",
+    "elasticsearch":"CVE-2015-1427 (Groovy RCE), unauthorized access",
+    "kibana":"CVE-2019-7609 (RCE), CVE-2021-22132 (file write)",
+    "roundcube":"CVE-2024-42009 (XSS in show.php) :contentReference[oaicite:7]{index=7}",
+    "crushftp":"CVE-2024-4040 (VFS bypass RCE) :contentReference[oaicite:8]{index=8}"
+        
+    }
+    out = [v for k,v in base.items() if k in service_str.lower()]
+    try:
+        ss=subprocess.getoutput(f"searchsploit {service_str}").splitlines()
+        cves=[line for line in ss if 'CVE' in line][:3]
+        out.extend(cves)
+    except:
+        pass
+    
+    return out or ["No CVE match found"]
         
 def scan_target(ip,mode='tcp',aggressive=True):
     scanner = nmap.PortScanner()
@@ -214,7 +258,7 @@ def scan_target(ip,mode='tcp',aggressive=True):
     info = scanner[ip]
     mac = get_mac(ip)
     vendor = get_mac_vendor(mac) if mac != "MAC Not Found" else "Unknown"
-    ports=[]
+    ports,services,exploit=[],[],[]
     open_port_nums = []  
 
     for proto in ('tcp', 'udp'):
@@ -224,17 +268,27 @@ def scan_target(ip,mode='tcp',aggressive=True):
                 port_str = f"{port}/{proto} ({pdata['state']})"
                 ports.append(port_str)
                 open_port_nums.append(port)
-        
-    os = os_detection(info, vendor, open_port_nums, mac_address=mac)
+                
+                sdecs = f"{pdata.get('name','')} {pdata.get('product','')} { pdata.get('version','')}".strip()
+                if sdecs:
+                    services.append(f"{port}/{proto}:{sdecs}")
+                    exploit+=suggest_exploit(sdecs)
     
-    print(os)
+    
+    exploit_str="".join(set(exploit))
+    os = os_detection(info, vendor, open_port_nums, mac_address=mac)
+    return os,exploit_str,services
         
 def main():
     printBanner()
     log("[*] Sn1p3rNetX+ started!")
     test_ip = console.input("Enter IP : ")
     mode=input("Enter a mode :")
-    scan_target(test_ip,mode,1)
+    os,exploit,services = scan_target(test_ip,mode,1)
+    print(os)
+    print(f"Exploit suggestion : {exploit}")
+    print(f"Services : {services}")
+    
     
 if __name__== "__main__":
     main()
