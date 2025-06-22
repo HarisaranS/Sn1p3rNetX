@@ -65,129 +65,354 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         elif not fall_back:
             fall_back = f"{name} Acc: {accuracy}%"
             
-        port_map={
-            22 : "Linux/Unix (SSH)",
-            445 : "Windows (SMB)",
-            3389 : "Windows (RDP)",
-            5555 : "Andriod (ADB)",
-            62078 : "Apple (AFP)",
-            3306 : "MySQL (Linux likely)",
-            548: "macOS (AFP)",
-            23: "Embedded (Telnet)",
-            37215: "Huawei IoT", 
+        port_map = {
+        # === Web Interfaces ===
+        80: "HTTP Web Interface (Router/CCTV/IoT/Web Server)",
+        443: "HTTPS Web Interface (Router/Admin Panel)",
+        8080: "Alt HTTP Web UI (IoT/Admin Panel)",
+        8443: "Alt HTTPS Web UI (Admin, Firewall, Fortinet)",
+
+        # === Remote Access & Management ===
+        22: "SSH (Linux, Routers, IoT, NAS)",
+        23: "Telnet (Old Routers, IoT, Printers)",
+        3389: "RDP (Windows Remote Desktop)",
+        5900: "VNC (Remote Desktop/IoT Cam UI)",
+        2222: "Alt SSH (Embedded/Linux IoT)",
+
+        # === File Sharing / Storage ===
+        21: "FTP (NAS/IoT File Transfer)",
+        139: "NetBIOS (Windows Sharing)",
+        445: "SMB (Windows/NAS Shares)",
+        2049: "NFS (Unix File Share)",
+        111: "Portmapper (NFS RPC support)",
+
+        # === Email Services (Common in Web/SMTP Servers) ===
+        25: "SMTP (Mail Server)",
+        110: "POP3 Mailbox Access",
+        143: "IMAP Email Retrieval",
+        587: "SMTP Submission",
+        993: "IMAPS (Secure Mail)",
+        465: "SMTPS (Secure Email Sending)",
+
+        # === Database Ports ===
+        3306: "MySQL/MariaDB (Web Backend, NAS)",
+        5432: "PostgreSQL (Web App DB)",
+        6379: "Redis (Cloud, Cache)",
+        27017: "MongoDB (NoSQL Web DB)",
+        1521: "Oracle DB",
+        1433: "MSSQL (Windows DB Server)",
+
+        # === Directory / Authentication ===
+        88: "Kerberos (Windows Domain Controller)",
+        389: "LDAP (Directory Service)",
+        636: "LDAPS (Secure LDAP)",
+
+        # === IoT / CCTV / Embedded ===
+        554: "RTSP (CCTV/IP Cam Streaming)",
+        5000: "Web Admin (QNAP/Synology/Dahua)",
+        8000: "CCTV Web UI / DVR Interface",
+        37777: "Dahua DVR (CCTV)",
+        10000: "Webmin or IoT Admin Interface",
+
+        # === VPN / Remote Tunnel Services ===
+        1723: "PPTP VPN",
+        500: "IPSec VPN",
+        4500: "NAT-T for IPSec VPN",
+        1194: "OpenVPN (UDP/TCP)",
+        1701: "L2TP VPN",
+        443: "SSL VPN (PulseSecure, Fortinet, SonicWall)",
+
+        # === DevOps / Monitoring Panels ===
+        3000: "Grafana Web Dashboard",
+        5601: "Kibana Dashboard",
+        9200: "Elasticsearch API (Unauth risk)",
+        15672: "RabbitMQ Dashboard",
+        8086: "InfluxDB (Metrics UI)",
+
+        # === SNMP / Device Discovery ===
+        161: "SNMP (Router/Switch Info Leak)",
+        162: "SNMP Trap Port",
+        5353: "mDNS (Apple Devices, IoT)",
+        1900: "UPnP SSDP (IoT Discovery)",
+        3702: "WS-Discovery (Windows, Smart Devices)",
+
+        # === Misc / Embedded Services ===
+        631: "IPP (Network Printers)",
+        515: "LPD (Printer Daemon)",
+        9100: "JetDirect (HP Printers)",
+        8888: "IoT Admin Panel / Config UI",
+        8880: "Alternate HTTP Interface",
+        8010: "IoT DVR Web Admin",
         }
+                
+        vendor_guess = {
+        # === Printers ===
+        "hp": "Printer",
+        "hewlett-packard": "Printer",
+        "canon": "Printer",
+        "epson": "Printer",
+        "brother": "Printer",
+        "lexmark": "Printer",
+        "ricoh": "Printer",
+        "xerox": "Printer",
+        "kyocera": "Printer",
+
+        # === CCTV / Surveillance ===
+        "hikvision": "CCTV/Camera",
+        "dahua": "CCTV/Camera",
+        "axis": "CCTV/Camera",
+        "uniview": "CCTV/Camera",
+        "amcrest": "CCTV/Camera",
+        "vivotek": "CCTV/Camera",
+        "honeywell": "CCTV/Camera",
+
+        # === Routers / Networking ===
+        "tplink": "Router",
+        "tp-link": "Router",
+        "dlink": "Router",
+        "d-link": "Router",
+        "netgear": "Router",
+        "zyxel": "Router",
+        "mikrotik": "Router",
+        "huawei": "Router",
+        "ubiquiti": "Router",
+        "juniper": "Router",
+        "aruba": "Router",
+        "cisco": "Router",
+        "linksys": "Router",
+        "buffalo": "Router",
+        "alcatel": "Router",
+        "fortinet": "Firewall/Router",
+        "sonicwall": "Firewall/Router",
+
+        # === NAS / Storage ===
+        "qnap": "NAS Storage",
+        "synology": "NAS Storage",
+        "buffalo": "NAS Storage",
+        "wd": "NAS Storage",
+        "seagate": "NAS Storage",
+        "dell emc": "Enterprise Storage",
+        "netapp": "Enterprise Storage",
+
+        # === IoT / Embedded ===
+        "raspberry": "IoT Device",
+        "arduino": "IoT Device",
+        "espressif": "IoT Device",
+        "tuya": "Smart Home IoT",
+        "espressif inc.": "IoT Device",
+        "esp32": "IoT Device",
+        "esp8266": "IoT Device",
+        "yeelight": "Smart Bulb",
+        "lifx": "Smart Bulb",
+        "sonoff": "IoT Relay Device",
+        "wiz": "Smart Light",
+
+        # === Cloud / Virtualization ===
+        "vmware": "Virtual Machine",
+        "virtualbox": "Virtual Machine",
+        "oracle": "Virtual Machine",
+        "microsoft": "Virtual Machine",
+        "parallels": "Virtual Machine",
+        "qemu": "Virtual Machine",
+        "xen": "Hypervisor",
+        "proxmox": "Hypervisor",
+        "aws": "Cloud Instance",
+        "azure": "Cloud Instance",
+        "google": "Cloud Instance",
+        "digitalocean": "Cloud Instance",
+        "linode": "Cloud Instance",
+
+        # === Enterprise Network Appliances ===
+        "aruba": "Switch/Access Point",
+        "hpe": "Switch/Access Point",
+        "juniper": "Firewall/Switch",
+        "checkpoint": "Firewall",
+        "watchguard": "Firewall",
+        "palo alto": "Firewall",
+        "cisco systems": "Enterprise Network",
+        "fortinet": "Firewall",
+        "sonicwall": "Firewall",
+
+        # === Others / Utilities ===
+        "broadcom": "Network Interface",
+        "intel": "Desktop/Laptop",
+        "dell": "Desktop/Laptop",
+        "lenovo": "Desktop/Laptop",
+        "asus": "Desktop/Laptop",
+        "acer": "Desktop/Laptop",
+        "samsung": "Android Phone/Smart Device",
+        "vivo": "Android Phone",
+        "realme": "Android Phone",
+        "redmi": "Android Phone",
+        "xiaomi": "Android Phone",
+        "oneplus": "Android Phone",
+        "nokia": "Android Phone",
+        "motorola": "Android Phone",
+        "apple": "iOS Device",
+        "foxconn": "Apple iOS Device",
+        "sony": "Smart TV / Android Phone",
+        "lg": "Smart TV / Android Phone",
+        "toshiba": "Smart TV / Laptop",
+        "philips": "Smart TV",
+        "panasonic": "Smart TV / Embedded",
+        "sharp": "Smart TV / Embedded"
+        }
+
+
         
-        port_based_guess = [port_map[p] for p in open_port if p in port_map]
+        mac_oui_map = {
+                # === Raspberry Pi (Broadcom chipsets) ===
+                "B827EB": "Raspberry Pi",
+                "DCA632": "Raspberry Pi",
+                "E45F01": "Raspberry Pi",
+                "DC446D": "Raspberry Pi",
+                "D8D43C": "Raspberry Pi",
+
+                # === VMware ===
+                "000C29": "VMware Virtual Machine",
+                "000569": "VMware Virtual Machine",
+                "001C14": "VMware Virtual Machine",
+                "005056": "VMware Virtual Machine",
+                "00E04C": "VMware Virtual NIC",
+
+                # === VirtualBox ===
+                "080027": "VirtualBox Guest",
+
+                # === Microsoft Hyper-V ===
+                "00155D": "Hyper-V Virtual Machine",
+
+                # === Parallels Desktop ===
+                "001C42": "Parallels VM",
+
+                # === QEMU / KVM ===
+                "525400": "QEMU/KVM Virtual NIC",
+
+                # === Xen (Amazon EC2 instances) ===
+                "FECACA": "Xen Virtual Machine",
+
+                # === Cisco Devices ===
+                "00000C": "Cisco Network Device",
+                "002264": "Cisco Network Device",
+                "D4C9EF": "Cisco Network Device",
+
+                # === Ubiquiti Devices ===
+                "44D9E7": "Ubiquiti Device",
+                "782BCB": "Ubiquiti Device",
+                "DC9FDB": "Ubiquiti Device",
+
+                # === MikroTik ===
+                "4C5E0C": "MikroTik Router",
+                "6C3B6B": "MikroTik Router",
+                "D4CA6D": "MikroTik Router",
+
+                # === TP-Link ===
+                "30B5C2": "TP-Link Router",
+                "50C7BF": "TP-Link Router",
+                "84D6D0": "TP-Link Router",
+
+                # === Huawei ===
+                "38F23E": "Huawei Device",
+                "F8D0BD": "Huawei Device",
+                "001E10": "Huawei Device",
+
+                # === Apple Devices ===
+                "F8E903": "Apple Device",
+                "28F10E": "Apple Device",
+                "A4B1C1": "Apple Device",
+                "B827EB": "Apple Device",  
+
+                # === Samsung Devices ===
+                "F8E968": "Samsung Android Device",
+                "84C9B2": "Samsung Android Device",
+                "70F11C": "Samsung Android Device",
+
+                # === Xiaomi Devices ===
+                "7427EA": "Xiaomi Android Device",
+                "18C086": "Xiaomi Android Device",
+                "48EE0C": "Xiaomi Android Device",
+
+                # === Hikvision IP Cameras ===
+                "FCFC48": "CCTV / Hikvision Camera",
+                "2CF0A2": "CCTV / Hikvision Camera",
+                "886B0F": "CCTV / Hikvision Camera",
+
+                # === Dahua Devices ===
+                "BC305B": "CCTV / Dahua Camera",
+                "54EE75": "CCTV / Dahua Camera",
+
+                # === Axis Cameras ===
+                "00408C": "CCTV / Axis Camera",
+
+                # === Intel NUC / Network Cards ===
+                "3C6A2C": "Intel Device",
+                "001B21": "Intel Network Interface",
+
+                # === Realtek (various embedded systems) ===
+                "E04F43": "Realtek Embedded",
+                "001C25": "Realtek Device",
+
+                # === Amazon Echo / Devices ===
+                "F0D2F1": "Amazon Echo / IoT",
+                "D850E6": "Amazon Echo Dot",
+
+                # === Google Nest / Home ===
+                "A4B121": "Google Nest / Home",
+                "F4F5DB": "Google Home",
+
+                # === LG TVs / Android Devices ===
+                "CCFA00": "LG Smart TV / Device",
+                "F8D0AC": "LG Electronics",
+
+                # === ASUS Routers ===
+                "A44CC8": "ASUS Router",
+                "E03F49": "ASUS Device",
+
+                # === Sony Android Devices / TVs ===
+                "E8E0B7": "Sony Smart TV / Android",
+                "F045DA": "Sony Xperia",
+
+                # === Dell Laptops / PCs ===
+                "F8BC12": "Dell PC/Laptop",
+                "8C604F": "Dell Device",
+
+                # === Lenovo ===
+                "1C6F65": "Lenovo Device",
+                "A0A336": "Lenovo Laptop",
+
+                # === HP Printers / PCs ===
+                "B86B23": "HP Device",
+                "203AEF": "HP Printer",
+
+                # === Netgear Routers ===
+                "A02195": "Netgear Router",
+                "1C233C": "Netgear Device"
+            }
         
-        v = vendor.lower()
-        vendor_guess=""
-        if any(x in v for x in [
-            "Samsung", "Xiaomi", "Redmi", "OnePlus", "Realme", "Vivo", "Oppo", "Motorola", "Nokia", "Google", "Huawei",
-            "Lenovo", "Sony", "LG", "Infinix", "Tecno", "Micromax", "Asus", "Honor", "Meizu", "ZTE", "Coolpad", "Lava", "Itel", "Panasonic", "Sharp", "Alcatel", "BLU", "LeEco"]):
-            vendor_guess="Android"
-        elif any(x in v for x in ["apple", "foxconn", "hon hai", "pegatron", "quanta", "compal", "luxshare", "wistron", "inventec"]):
-            vendor_guess = "iOS / Apple Device"
-    
-        elif any(x in v for x in [
-            "intel", "hp", "hewlett", "dell", "lenovo", "asus", "acer", "msi", "toshiba",
-            "gigabyte", "samsung", "lg", "sony", "panasonic", "fujitsu", "vaio", "clevo"
-        ]):
-            vendor_guess = "Windows / PC / Laptop"
+ # === Port-based OS Guessing ===
+    port_based_guess = [port_map[p] for p in open_port if p in port_map]
 
-        elif any(x in v for x in [
-            "raspberry", "arduino", "espressif", "beaglebone", "pine64", "banana", "orangepi",
-            "hardkernel", "nvidia", "jetson", "seeed", "odroid", "olimex", "libre"
-        ]):
-            vendor_guess = "Linux (IoT / Embedded)"
+    # === Vendor Heuristic Guess ===
+    v = vendor.lower()
+    vendor_match = vendor_guess.get(v, "")
 
-        elif any(x in v for x in [
-            "hikvision", "dahua", "axis", "uniview", "reolink", "ezviz", "cp plus", "honeywell",
-            "swann", "flir", "bosch", "lorex", "panasonic", "geovision", "acti", "avtech", "mobotix"
-        ]):
-            vendor_guess = "CCTV Camera / Surveillance"
+    # === MAC Prefix-based Guess ===
+    mac_guess = ""
+    if mac_address:
+        oui = vendor.upper().replace(':', "")[:6]
+        mac_guess = mac_oui_map.get(oui, "")
 
-        elif any(x in v for x in [
-            "tplink", "netgear", "dlink", "zyxel", "mikrotik", "cisco", "asus", "linksys", "huawei",
-            "ubiquiti", "mercusys", "tenda", "edimax", "juniper", "hpe", "fortinet", "draytek", "openwrt"
-        ]):
-            vendor_guess = "Router / Modem / Network Device"
-
-        mac_guess = ""
-        if mac_address :
-            oui=vendor.upper().replace(':',"")[:6]
-            # === Raspberry Pi (Broadcom chipsets) ===
-            if oui in ["B827EB", "DCA632", "E45F01", "DC446D", "D8D43C"]:
-                mac_guess = "Raspberry Pi"
-
-            # === VMware ===
-            elif oui in ["000C29", "000569", "001C14", "005056", "00E04C"]:
-                mac_guess = "VMware Virtual Machine"
-
-            # === VirtualBox ===
-            elif oui in ["080027"]:
-                mac_guess = "VirtualBox Guest"
-
-            # === Microsoft Hyper-V ===
-            elif oui in ["00155D"]:
-                mac_guess = "Hyper-V Virtual Machine"
-
-            # === Parallels Desktop ===
-            elif oui in ["001C42"]:
-                mac_guess = "Parallels VM"
-
-            # === QEMU / KVM ===
-            elif oui in ["525400"]:
-                mac_guess = "QEMU/KVM Virtual NIC"
-
-            # === Xen (Amazon EC2 instances) ===
-            elif oui in ["FECACA"]:
-                mac_guess = "Xen Virtual Machine"
-
-            # === IP Cameras ===
-            elif oui in ["FCFC48", "2CF0A2", "886B0F"]:  
-                mac_guess = "CCTV / IP Camera"
-
-            # === Cisco Devices ===
-            elif oui in ["00000C", "002264", "D4C9EF"]:
-                mac_guess = "Cisco Network Device"
-
-            # === TP-Link ===
-            elif oui in ["30B5C2", "50C7BF", "84D6D0"]:
-                mac_guess = "TP-Link Router/Switch"
-
-            # === Ubiquiti ===
-            elif oui in ["44D9E7", "782BCB", "DC9FDB"]:
-                mac_guess = "Ubiquiti Device"
-
-            # === MikroTik ===
-            elif oui in ["4C5E0C", "6C3B6B", "D4CA6D"]:
-                mac_guess = "MikroTik Router"
-
-            # === Apple Devices ===
-            elif oui in ["F8E903", "28F10E", "A4B1C1", "B827EB"]:
-                mac_guess = "Apple Device"
-
-            # === Samsung Android ===
-            elif oui in ["F8E968", "84C9B2", "70F11C"]:
-                mac_guess = "Samsung Android Device"
-
-            # === Huawei Devices ===
-            elif oui in ["38F23E", "F8D0BD", "001E10"]:
-                mac_guess = "Huawei Device"
-
-            # === Xiaomi Devices ===
-            elif oui in ["7427EA", "18C086", "48EE0C"]:
-                mac_guess = "Xiaomi Android Device"
-
+    # === Final Assembly ===
     final_os_guess = "\n".join(guesses[:2]) if guesses else "Unknown OS Detection"
-    
-    if port_based_guess :
-        final_os_guess += "\nPort Fingerprinting :" + ",".join(set(port_based_guess))
-    if vendor_guess and vendor_guess not in final_os_guess :
-        final_os_guess += f"\nVendor Heuristic : {vendor_guess}"
-    if mac_guess and mac_guess not in final_os_guess :
+
+    if port_based_guess:
+        final_os_guess += "\nPort Fingerprinting : " + ", ".join(set(port_based_guess))
+
+    if vendor_match and vendor_match not in final_os_guess:
+        final_os_guess += f"\nVendor Heuristic : {vendor_match}"
+
+    if mac_guess and mac_guess not in final_os_guess:
         final_os_guess += f"\nMac Prefix guess : {mac_guess}"
-        
+
     return final_os_guess
 
 def suggest_exploit(service_str):
@@ -421,15 +646,15 @@ def scan_target(ip,mode='tcp',aggressive=True):
     port_str=",".join(ports)
     alert = detect_anomaly(port_str,services)
     
-    return os,exploit_str,services,alert
+    return mac,os,exploit_str,services,alert
         
 def main():
     printBanner()
     test_ip = console.input("[green]Enter IP : [/green]")
     mode = console.input("[yellow]Scan mode : [/yellow]")
     
-    os, exploit, services, alert = scan_target(test_ip, mode, 1)
-
+    mac,os, exploit, services, alert = scan_target(test_ip, mode, 1)
+    console.print(f"[cyan]Mac Address : {mac}[/cyan]")
     console.print(f"[blue]Detected OS:\n{os}[/blue]")
     console.print(f"[bright_yellow]Exploit Suggestion:\n{exploit}[/bright_yellow]")
     console.print(f"[cyan]Services:\n{services}[/cyan]")
