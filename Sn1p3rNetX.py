@@ -65,7 +65,6 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         elif not fall_back:
             fall_back = f"{name} Acc: {accuracy}%"
             
-        
         port_map={
             22 : "Linux/Unix (SSH)",
             445 : "Windows (SMB)",
@@ -417,22 +416,25 @@ def scan_target(ip,mode='tcp',aggressive=True):
                     services.append(f"{port}/{proto}:{sdecs}")
                     exploit+=suggest_exploit(sdecs)
     
-    
     exploit_str="".join(set(exploit))
     os = os_detection(info, vendor, open_port_nums, mac_address=mac)
     port_str=",".join(ports)
     alert = detect_anomaly(port_str,services)
+    
     return os,exploit_str,services,alert
         
 def main():
     printBanner()
-    test_ip = console.input("Enter IP : ")
-    mode=input("Enter a mode :")
-    os,exploit,services,alert = scan_target(test_ip,mode,1)
-    print(os)
-    print(f"Exploit suggestion : {exploit}")
-    print(f"Services : {services}")
-    print(f"Alert : {alert}")
+    test_ip = console.input("[green]Enter IP : [/green]")
+    mode = console.input("[yellow]Scan mode : [/yellow]")
+    
+    os, exploit, services, alert = scan_target(test_ip, mode, 1)
+
+    console.print(f"[blue]Detected OS:\n{os}[/blue]")
+    console.print(f"[bright_yellow]Exploit Suggestion:\n{exploit}[/bright_yellow]")
+    console.print(f"[cyan]Services:\n{services}[/cyan]")
+    console.print(f"[bold red]Alerts:\n{alert}[/bold red]")
+
     
 if __name__== "__main__":
     main()
