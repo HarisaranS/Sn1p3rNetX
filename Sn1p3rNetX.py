@@ -642,22 +642,32 @@ def scan_target(ip,mode='tcp',aggressive=True):
                     exploit+=suggest_exploit(sdecs)
     
     exploit_str="".join(set(exploit))
-    os = os_detection(info, vendor, open_port_nums, mac_address=mac)
+    
+    os = os_detection(info, vendor, open_port_nums, mac_address=mac) \
+        if 'osmatch' in  info or 'tcp' in info else "OS detection Skipped"
+        
     port_str=",".join(ports)
+    
+    vuln_output = "\n".join([
+        script.get('output','') for script in info.get('Hostname','') \
+            if 'vulners' in script.get('id','')
+    ])
+    
     alert = detect_anomaly(port_str,services)
     
-    return mac,os,exploit_str,services,alert
+    return mac,os,exploit_str,services,alert,vuln_output
         
 def main():
     printBanner()
     test_ip = console.input("[green]Enter IP : [/green]")
     mode = console.input("[yellow]Scan mode : [/yellow]")
     
-    mac,os, exploit, services, alert = scan_target(test_ip, mode, 1)
+    mac,os, exploit, services, alert,vuln_output = scan_target(test_ip, mode, 1)
     console.print(f"[cyan]Mac Address : {mac}[/cyan]")
     console.print(f"[blue]Detected OS:\n{os}[/blue]")
     console.print(f"[bright_yellow]Exploit Suggestion:\n{exploit}[/bright_yellow]")
     console.print(f"[cyan]Services:\n{services}[/cyan]")
+    console.print(f"[red]Vulnerability:\n{vuln_output or None}[/red]")
     console.print(f"[bold red]Alerts:\n{alert}[/bold red]")
 
     
