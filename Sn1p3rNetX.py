@@ -1,24 +1,30 @@
 import nmap
 import os
+import ipaddress
 import subprocess
 import re
 import json
 from getmac import get_mac_address
 from mac_vendor_lookup import MacLookup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pyfiglet import Figlet
+from rich.table import Table
+from rich.progress import Progress
 from rich.console import Console
 
 console = Console()
+results_data=[]
 log_file = f"logs/scan_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.log"
 CACHE_FILE = ".mac_cache.json"
+save_file = "results.json"
 mac_cache={}
 
 if os.path.exists(CACHE_FILE):
     with open(CACHE_FILE,"r") as f:
         mac_cache=json.load(f)
 
-def printBanner():
+def print_Banner():
     f=Figlet(font='slant')
     console.print(f.renderText("Sn1p3rNetX"),style='bold red')
     
@@ -65,8 +71,9 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         elif not fall_back:
             fall_back = f"{name} Acc: {accuracy}%"
             
-        port_map = {
-        # === Web Interfaces ===
+    
+    port_map = {
+    # === Web Interfaces ===
         80: "HTTP Web Interface (Router/CCTV/IoT/Web Server)",
         443: "HTTPS Web Interface (Router/Admin Panel)",
         8080: "Alt HTTP Web UI (IoT/Admin Panel)",
@@ -145,7 +152,7 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         8010: "IoT DVR Web Admin",
         }
                 
-        vendor_guess = {
+    vendor_guess = {
         # === Printers ===
         "hp": "Printer",
         "hewlett-packard": "Printer",
@@ -170,7 +177,7 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         "tplink": "Router",
         "tp-link": "Router",
         "dlink": "Router",
-        "d-link": "Router",
+        "D-Link": "Router",
         "netgear": "Router",
         "zyxel": "Router",
         "mikrotik": "Router",
@@ -260,7 +267,7 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
 
 
         
-        mac_oui_map = {
+    mac_oui_map = {
                 # === Raspberry Pi (Broadcom chipsets) ===
                 "B827EB": "Raspberry Pi",
                 "DCA632": "Raspberry Pi",
@@ -602,6 +609,41 @@ def detect_anomaly(port : list,services : list)->str:
     return "\n".join(alert)
     
     
+def scan_hosts(target_range,mode ='tcp',aggressive='False',threads=20):
+    
+    scanner = nmap.PortScanner()
+    console.print(f"[yellow]\n[+] Performing ping scan on: {target_range}[/yellow]")
+    scanner.scan(hosts=target_range, arguments="-T4 -sn")
+    live_hosts = scanner.all_hosts()
+    if not live_hosts:
+        console.print("[-] No live hosts detected", style="red")
+        return
+
+    console.print(f"[green][+] {len(live_hosts)} live hosts found. Starting deep scan...\n")
+    
+    with Progress() as progress:
+        task = progress.add_task("[bold blue]Scanning Hosts...", total=len(live_hosts))
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = {executor.submit(scan_target, ip, mode, aggressive): ip for ip in live_hosts}
+            for future in as_completed(futures):
+                ip = futures[future]
+                try:
+                    result = future.result()
+                    console.print(f"[cyan]{ip}[/cyan]: Scan Done → [green]{result[1]}[/green]")
+                except Exception as e:
+                    log(f"Error scanning {ip}: {e}")
+                progress.update(task, advance=2)
+     
+    if results_data:
+        table = Table(show_header=True, header_style="bold magenta")
+        for col in results_data[0].keys():
+            table.add_column(col, style="white", overflow="fold")
+        for r in results_data:
+            table.add_row(*[str(r[col]) for col in r])
+        console.print("\n[green][+] Scan Results:[/green]\n")
+        console.print(table)            
+    
+    
 def scan_target(ip,mode='tcp',aggressive=True):
     scanner = nmap.PortScanner()
 
@@ -616,59 +658,80 @@ def scan_target(ip,mode='tcp',aggressive=True):
 
     try:
         scanner.scan(ip, arguments=args + " --host-timeout 60s")
-
         if ip not in scanner.all_hosts():
             scanner.scan(ip, arguments="-Pn -T4")
-    except:
-        return [ip, "Unresponsive"]
+            if ip not in scanner.all_hosts():
+                return [ip, "Unresponsive", "-", "-", "-", "-", "-", "-", "-"]
+            else:
+                status = "Firewalled but Live"
+        else:
+            status = "Live"
     
-    info = scanner[ip]
-    mac = get_mac(ip)
-    vendor = get_mac_vendor(mac) if mac != "MAC Not Found" else "Unknown"
-    ports,services,exploit=[],[],[]
-    open_port_nums = []  
+        info = scanner[ip]
+        mac = get_mac(ip)
+        vendor = get_mac_vendor(mac) if mac != "MAC Not Found" else "Unknown"
+        ports,services,exploit=[],[],[]
+        open_port_nums = []  
 
-    for proto in ('tcp', 'udp'):
-        if proto in info:
-            for port in info[proto]:
-                pdata = info[proto][port]
-                port_str = f"{port}/{proto} ({pdata['state']})"
-                ports.append(port_str)
-                open_port_nums.append(port)
-                
-                sdecs = f"{pdata.get('name','')} {pdata.get('product','')} { pdata.get('version','')}".strip()
-                if sdecs:
-                    services.append(f"{port}/{proto}:{sdecs}")
-                    exploit+=suggest_exploit(sdecs)
-    
-    exploit_str="".join(set(exploit))
-    
-    os = os_detection(info, vendor, open_port_nums, mac_address=mac) \
-        if 'osmatch' in  info or 'tcp' in info else "OS detection Skipped"
+        for proto in ('tcp', 'udp'):
+            if proto in info:
+                for port in info[proto]:
+                    pdata = info[proto][port]
+                    port_str = f"{port}/{proto} ({pdata['state']})"
+                    ports.append(port_str)
+                    open_port_nums.append(port)
+                    
+                    sdecs = f"{pdata.get('name','')} {pdata.get('product','')} { pdata.get('version','')}".strip()
+                    if sdecs:
+                        services.append(f"{port}/{proto}:{sdecs}")
+                        exploit+=suggest_exploit(sdecs)
         
-    port_str=",".join(ports)
-    
-    vuln_output = "\n".join([
-        script.get('output','') for script in info.get('Hostname','') \
-            if 'vulners' in script.get('id','')
-    ])
-    
-    alert = detect_anomaly(port_str,services)
-    
-    return mac,os,exploit_str,services,alert,vuln_output
+        exploit_str="".join(set(exploit))
+        
+        os = os_detection(info, vendor, open_port_nums, mac_address=mac) \
+            if 'osmatch' in  info or 'tcp' in info else "OS detection Skipped"
+            
+        port_str=",".join(ports)
+        
+        vuln_output = "\n".join([
+            script.get('output','') for script in info.get('Hostname','') \
+                if 'vulners' in script.get('id','')
+        ])
+        
+        alert = detect_anomaly(port_str,services)
+
+        result = [ip, status, mac, vendor, os, port_str, vuln_output or "None", exploit_str, alert]
+
+        results_data.append({
+                "IP": ip,
+                "Status": status,
+                "MAC": mac,
+                "Vendor": vendor,
+                "OS": os,
+                "Ports": port_str,
+                "Vulnerabilities": vuln_output or "None",
+                "Exploits": exploit_str or "No CVE match found",
+                "Alert": alert,
+            })
+
+        return result
+
+    except Exception as e:
+        log(f"[!] Error scanning {ip}: {e}")
+        return [ip, "Error", "Error", "Error", "Error", "Error", "Error", "Error", str(e)]
         
 def main():
-    printBanner()
-    test_ip = console.input("[green]Enter IP : [/green]")
-    mode = console.input("[yellow]Scan mode : [/yellow]")
-    
-    mac,os, exploit, services, alert,vuln_output = scan_target(test_ip, mode, 1)
-    console.print(f"[cyan]Mac Address : {mac}[/cyan]")
-    console.print(f"[blue]Detected OS:\n{os}[/blue]")
-    console.print(f"[bright_yellow]Exploit Suggestion:\n{exploit}[/bright_yellow]")
-    console.print(f"[cyan]Services:\n{services}[/cyan]")
-    console.print(f"[red]Vulnerability:\n{vuln_output or None}[/red]")
-    console.print(f"[bold red]Alerts:\n{alert}[/bold red]")
+    print_Banner()
+    console.print("[bold blue]Interactive Mode (Beginner-Friendly)[/bold blue]")
+    target = console.input("[green]Enter Target CIDR or type 'auto' to scan local network (e.g. 192.168.1.0/24 or auto): [/green]")
+    mode = console.input("[green]Scan Mode? [tcp/udp/both] (default: tcp): [/green]") or "tcp"
+    aggressive = console.input("[green]Aggressive Scan? [y/n] (default: n): [/green]").lower() == 'y'
+    threads = console.input("[green]Max Threads? (default: 20): [/green]")
+    try:
+        threads = int(threads)
+    except:
+        threads = 20
+    scan_hosts(target, mode, aggressive, threads)
 
     
 if __name__== "__main__":
