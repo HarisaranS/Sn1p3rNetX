@@ -1,25 +1,24 @@
-import nmap
-import os
-import ipaddress
-import subprocess
-import re
-import json
+import os, re, ipaddress, subprocess, json, csv
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from colorama import init
 from getmac import get_mac_address
 from mac_vendor_lookup import MacLookup
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
 from pyfiglet import Figlet
+from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress
-from rich.console import Console
+import nmap
 
+# === Setup ===
+init(autoreset=True)
 console = Console()
-results_data=[]
-log_file = f"logs/scan_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.log"
+results_data = []
+scanned_ips = set()
 CACHE_FILE = ".mac_cache.json"
 save_file = "results.json"
-mac_cache={}
-
+log_file = f"logs/scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+mac_cache = {}
 if os.path.exists(CACHE_FILE):
     with open(CACHE_FILE,"r") as f:
         mac_cache=json.load(f)
@@ -71,354 +70,8 @@ def os_detection(host_info,vendor,open_port,mac_address=""):
         elif not fall_back:
             fall_back = f"{name} Acc: {accuracy}%"
             
-    
-    port_map = {
-    # === Web Interfaces ===
-        80: "HTTP Web Interface (Router/CCTV/IoT/Web Server)",
-        443: "HTTPS Web Interface (Router/Admin Panel)",
-        8080: "Alt HTTP Web UI (IoT/Admin Panel)",
-        8443: "Alt HTTPS Web UI (Admin, Firewall, Fortinet)",
-
-        # === Remote Access & Management ===
-        22: "SSH (Linux, Routers, IoT, NAS)",
-        23: "Telnet (Old Routers, IoT, Printers)",
-        3389: "RDP (Windows Remote Desktop)",
-        5900: "VNC (Remote Desktop/IoT Cam UI)",
-        2222: "Alt SSH (Embedded/Linux IoT)",
-
-        # === File Sharing / Storage ===
-        21: "FTP (NAS/IoT File Transfer)",
-        139: "NetBIOS (Windows Sharing)",
-        445: "SMB (Windows/NAS Shares)",
-        2049: "NFS (Unix File Share)",
-        111: "Portmapper (NFS RPC support)",
-
-        # === Email Services (Common in Web/SMTP Servers) ===
-        25: "SMTP (Mail Server)",
-        110: "POP3 Mailbox Access",
-        143: "IMAP Email Retrieval",
-        587: "SMTP Submission",
-        993: "IMAPS (Secure Mail)",
-        465: "SMTPS (Secure Email Sending)",
-
-        # === Database Ports ===
-        3306: "MySQL/MariaDB (Web Backend, NAS)",
-        5432: "PostgreSQL (Web App DB)",
-        6379: "Redis (Cloud, Cache)",
-        27017: "MongoDB (NoSQL Web DB)",
-        1521: "Oracle DB",
-        1433: "MSSQL (Windows DB Server)",
-
-        # === Directory / Authentication ===
-        88: "Kerberos (Windows Domain Controller)",
-        389: "LDAP (Directory Service)",
-        636: "LDAPS (Secure LDAP)",
-
-        # === IoT / CCTV / Embedded ===
-        554: "RTSP (CCTV/IP Cam Streaming)",
-        5000: "Web Admin (QNAP/Synology/Dahua)",
-        8000: "CCTV Web UI / DVR Interface",
-        37777: "Dahua DVR (CCTV)",
-        10000: "Webmin or IoT Admin Interface",
-
-        # === VPN / Remote Tunnel Services ===
-        1723: "PPTP VPN",
-        500: "IPSec VPN",
-        4500: "NAT-T for IPSec VPN",
-        1194: "OpenVPN (UDP/TCP)",
-        1701: "L2TP VPN",
-        443: "SSL VPN (PulseSecure, Fortinet, SonicWall)",
-
-        # === DevOps / Monitoring Panels ===
-        3000: "Grafana Web Dashboard",
-        5601: "Kibana Dashboard",
-        9200: "Elasticsearch API (Unauth risk)",
-        15672: "RabbitMQ Dashboard",
-        8086: "InfluxDB (Metrics UI)",
-
-        # === SNMP / Device Discovery ===
-        161: "SNMP (Router/Switch Info Leak)",
-        162: "SNMP Trap Port",
-        5353: "mDNS (Apple Devices, IoT)",
-        1900: "UPnP SSDP (IoT Discovery)",
-        3702: "WS-Discovery (Windows, Smart Devices)",
-
-        # === Misc / Embedded Services ===
-        631: "IPP (Network Printers)",
-        515: "LPD (Printer Daemon)",
-        9100: "JetDirect (HP Printers)",
-        8888: "IoT Admin Panel / Config UI",
-        8880: "Alternate HTTP Interface",
-        8010: "IoT DVR Web Admin",
-        }
-                
-    vendor_guess = {
-        # === Printers ===
-        "hp": "Printer",
-        "hewlett-packard": "Printer",
-        "canon": "Printer",
-        "epson": "Printer",
-        "brother": "Printer",
-        "lexmark": "Printer",
-        "ricoh": "Printer",
-        "xerox": "Printer",
-        "kyocera": "Printer",
-
-        # === CCTV / Surveillance ===
-        "hikvision": "CCTV/Camera",
-        "dahua": "CCTV/Camera",
-        "axis": "CCTV/Camera",
-        "uniview": "CCTV/Camera",
-        "amcrest": "CCTV/Camera",
-        "vivotek": "CCTV/Camera",
-        "honeywell": "CCTV/Camera",
-
-        # === Routers / Networking ===
-        "tplink": "Router",
-        "tp-link": "Router",
-        "dlink": "Router",
-        "D-Link": "Router",
-        "netgear": "Router",
-        "zyxel": "Router",
-        "mikrotik": "Router",
-        "huawei": "Router",
-        "ubiquiti": "Router",
-        "juniper": "Router",
-        "aruba": "Router",
-        "cisco": "Router",
-        "linksys": "Router",
-        "buffalo": "Router",
-        "alcatel": "Router",
-        "fortinet": "Firewall/Router",
-        "sonicwall": "Firewall/Router",
-
-        # === NAS / Storage ===
-        "qnap": "NAS Storage",
-        "synology": "NAS Storage",
-        "buffalo": "NAS Storage",
-        "wd": "NAS Storage",
-        "seagate": "NAS Storage",
-        "dell emc": "Enterprise Storage",
-        "netapp": "Enterprise Storage",
-
-        # === IoT / Embedded ===
-        "raspberry": "IoT Device",
-        "arduino": "IoT Device",
-        "espressif": "IoT Device",
-        "tuya": "Smart Home IoT",
-        "espressif inc.": "IoT Device",
-        "esp32": "IoT Device",
-        "esp8266": "IoT Device",
-        "yeelight": "Smart Bulb",
-        "lifx": "Smart Bulb",
-        "sonoff": "IoT Relay Device",
-        "wiz": "Smart Light",
-
-        # === Cloud / Virtualization ===
-        "vmware": "Virtual Machine",
-        "virtualbox": "Virtual Machine",
-        "oracle": "Virtual Machine",
-        "microsoft": "Virtual Machine",
-        "parallels": "Virtual Machine",
-        "qemu": "Virtual Machine",
-        "xen": "Hypervisor",
-        "proxmox": "Hypervisor",
-        "aws": "Cloud Instance",
-        "azure": "Cloud Instance",
-        "google": "Cloud Instance",
-        "digitalocean": "Cloud Instance",
-        "linode": "Cloud Instance",
-
-        # === Enterprise Network Appliances ===
-        "aruba": "Switch/Access Point",
-        "hpe": "Switch/Access Point",
-        "juniper": "Firewall/Switch",
-        "checkpoint": "Firewall",
-        "watchguard": "Firewall",
-        "palo alto": "Firewall",
-        "cisco systems": "Enterprise Network",
-        "fortinet": "Firewall",
-        "sonicwall": "Firewall",
-
-        # === Others / Utilities ===
-        "broadcom": "Network Interface",
-        "intel": "Desktop/Laptop",
-        "dell": "Desktop/Laptop",
-        "lenovo": "Desktop/Laptop",
-        "asus": "Desktop/Laptop",
-        "acer": "Desktop/Laptop",
-        "samsung": "Android Phone/Smart Device",
-        "vivo": "Android Phone",
-        "realme": "Android Phone",
-        "redmi": "Android Phone",
-        "xiaomi": "Android Phone",
-        "oneplus": "Android Phone",
-        "nokia": "Android Phone",
-        "motorola": "Android Phone",
-        "apple": "iOS Device",
-        "foxconn": "Apple iOS Device",
-        "sony": "Smart TV / Android Phone",
-        "lg": "Smart TV / Android Phone",
-        "toshiba": "Smart TV / Laptop",
-        "philips": "Smart TV",
-        "panasonic": "Smart TV / Embedded",
-        "sharp": "Smart TV / Embedded"
-        }
-
-
-        
-    mac_oui_map = {
-                # === Raspberry Pi (Broadcom chipsets) ===
-                "B827EB": "Raspberry Pi",
-                "DCA632": "Raspberry Pi",
-                "E45F01": "Raspberry Pi",
-                "DC446D": "Raspberry Pi",
-                "D8D43C": "Raspberry Pi",
-
-                # === VMware ===
-                "000C29": "VMware Virtual Machine",
-                "000569": "VMware Virtual Machine",
-                "001C14": "VMware Virtual Machine",
-                "005056": "VMware Virtual Machine",
-                "00E04C": "VMware Virtual NIC",
-
-                # === VirtualBox ===
-                "080027": "VirtualBox Guest",
-
-                # === Microsoft Hyper-V ===
-                "00155D": "Hyper-V Virtual Machine",
-
-                # === Parallels Desktop ===
-                "001C42": "Parallels VM",
-
-                # === QEMU / KVM ===
-                "525400": "QEMU/KVM Virtual NIC",
-
-                # === Xen (Amazon EC2 instances) ===
-                "FECACA": "Xen Virtual Machine",
-
-                # === Cisco Devices ===
-                "00000C": "Cisco Network Device",
-                "002264": "Cisco Network Device",
-                "D4C9EF": "Cisco Network Device",
-
-                # === Ubiquiti Devices ===
-                "44D9E7": "Ubiquiti Device",
-                "782BCB": "Ubiquiti Device",
-                "DC9FDB": "Ubiquiti Device",
-
-                # === MikroTik ===
-                "4C5E0C": "MikroTik Router",
-                "6C3B6B": "MikroTik Router",
-                "D4CA6D": "MikroTik Router",
-
-                # === TP-Link ===
-                "30B5C2": "TP-Link Router",
-                "50C7BF": "TP-Link Router",
-                "84D6D0": "TP-Link Router",
-
-                # === Huawei ===
-                "38F23E": "Huawei Device",
-                "F8D0BD": "Huawei Device",
-                "001E10": "Huawei Device",
-
-                # === Apple Devices ===
-                "F8E903": "Apple Device",
-                "28F10E": "Apple Device",
-                "A4B1C1": "Apple Device",
-                "B827EB": "Apple Device",  
-
-                # === Samsung Devices ===
-                "F8E968": "Samsung Android Device",
-                "84C9B2": "Samsung Android Device",
-                "70F11C": "Samsung Android Device",
-
-                # === Xiaomi Devices ===
-                "7427EA": "Xiaomi Android Device",
-                "18C086": "Xiaomi Android Device",
-                "48EE0C": "Xiaomi Android Device",
-
-                # === Hikvision IP Cameras ===
-                "FCFC48": "CCTV / Hikvision Camera",
-                "2CF0A2": "CCTV / Hikvision Camera",
-                "886B0F": "CCTV / Hikvision Camera",
-
-                # === Dahua Devices ===
-                "BC305B": "CCTV / Dahua Camera",
-                "54EE75": "CCTV / Dahua Camera",
-
-                # === Axis Cameras ===
-                "00408C": "CCTV / Axis Camera",
-
-                # === Intel NUC / Network Cards ===
-                "3C6A2C": "Intel Device",
-                "001B21": "Intel Network Interface",
-
-                # === Realtek (various embedded systems) ===
-                "E04F43": "Realtek Embedded",
-                "001C25": "Realtek Device",
-
-                # === Amazon Echo / Devices ===
-                "F0D2F1": "Amazon Echo / IoT",
-                "D850E6": "Amazon Echo Dot",
-
-                # === Google Nest / Home ===
-                "A4B121": "Google Nest / Home",
-                "F4F5DB": "Google Home",
-
-                # === LG TVs / Android Devices ===
-                "CCFA00": "LG Smart TV / Device",
-                "F8D0AC": "LG Electronics",
-
-                # === ASUS Routers ===
-                "A44CC8": "ASUS Router",
-                "E03F49": "ASUS Device",
-
-                # === Sony Android Devices / TVs ===
-                "E8E0B7": "Sony Smart TV / Android",
-                "F045DA": "Sony Xperia",
-
-                # === Dell Laptops / PCs ===
-                "F8BC12": "Dell PC/Laptop",
-                "8C604F": "Dell Device",
-
-                # === Lenovo ===
-                "1C6F65": "Lenovo Device",
-                "A0A336": "Lenovo Laptop",
-
-                # === HP Printers / PCs ===
-                "B86B23": "HP Device",
-                "203AEF": "HP Printer",
-
-                # === Netgear Routers ===
-                "A02195": "Netgear Router",
-                "1C233C": "Netgear Device"
-            }
-        
- # === Port-based OS Guessing ===
-    port_based_guess = [port_map[p] for p in open_port if p in port_map]
-
-    # === Vendor Heuristic Guess ===
-    v = vendor.lower()
-    vendor_match = vendor_guess.get(v, "")
-
-    # === MAC Prefix-based Guess ===
-    mac_guess = ""
-    if mac_address:
-        oui = vendor.upper().replace(':', "")[:6]
-        mac_guess = mac_oui_map.get(oui, "")
-
-    # === Final Assembly ===
     final_os_guess = "\n".join(guesses[:2]) if guesses else "Unknown OS Detection"
 
-    if port_based_guess:
-        final_os_guess += "\nPort Fingerprinting : " + ", ".join(set(port_based_guess))
-
-    if vendor_match and vendor_match not in final_os_guess:
-        final_os_guess += f"\nVendor Heuristic : {vendor_match}"
-
-    if mac_guess and mac_guess not in final_os_guess:
-        final_os_guess += f"\nMac Prefix guess : {mac_guess}"
 
     return final_os_guess
 
@@ -464,7 +117,7 @@ def suggest_exploit(service_str):
     except:
         pass
     
-    return out or ["No CVE match found"]
+    return out 
 
 def detect_anomaly(port : list,services : list)->str:
     alert = []
@@ -606,42 +259,7 @@ def detect_anomaly(port : list,services : list)->str:
     if not alert:
         alert.append("[OK] No immediate anomaly detected , recommend manual review")
         
-    return "\n".join(alert)
-    
-    
-def scan_hosts(target_range,mode ='tcp',aggressive='False',threads=20):
-    
-    scanner = nmap.PortScanner()
-    console.print(f"[yellow]\n[+] Performing ping scan on: {target_range}[/yellow]")
-    scanner.scan(hosts=target_range, arguments="-T4 -sn")
-    live_hosts = scanner.all_hosts()
-    if not live_hosts:
-        console.print("[-] No live hosts detected", style="red")
-        return
-
-    console.print(f"[green][+] {len(live_hosts)} live hosts found. Starting deep scan...\n")
-    
-    with Progress() as progress:
-        task = progress.add_task("[bold blue]Scanning Hosts...", total=len(live_hosts))
-        with ThreadPoolExecutor(max_workers=threads) as executor:
-            futures = {executor.submit(scan_target, ip, mode, aggressive): ip for ip in live_hosts}
-            for future in as_completed(futures):
-                ip = futures[future]
-                try:
-                    result = future.result()
-                    console.print(f"[cyan]{ip}[/cyan]: Scan Done → [green]{result[1]}[/green]")
-                except Exception as e:
-                    log(f"Error scanning {ip}: {e}")
-                progress.update(task, advance=2)
-     
-    if results_data:
-        table = Table(show_header=True, header_style="bold magenta")
-        for col in results_data[0].keys():
-            table.add_column(col, style="white", overflow="fold")
-        for r in results_data:
-            table.add_row(*[str(r[col]) for col in r])
-        console.print("\n[green][+] Scan Results:[/green]\n")
-        console.print(table)            
+    return "\n".join(alert)           
     
     
 def scan_target(ip,mode='tcp',aggressive=True):
@@ -720,19 +338,76 @@ def scan_target(ip,mode='tcp',aggressive=True):
         log(f"[!] Error scanning {ip}: {e}")
         return [ip, "Error", "Error", "Error", "Error", "Error", "Error", "Error", str(e)]
         
-def main():
+def scan_network(target_range, mode='tcp', aggressive=False, threads=20, fresh=False):
+    if fresh and os.path.exists(save_file): os.remove(save_file)
+    try:
+        if target_range.lower() == 'auto':
+            default_iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
+            iface_info = netifaces.ifaddresses(default_iface)[netifaces.AF_INET][0]
+            local_ip = iface_info['addr']
+            netmask = iface_info['netmask']
+            interface = ipaddress.IPv4Interface(f"{local_ip}/{netmask}")
+            target_range = str(interface.network)
+            console.print(f"[yellow][+] Auto-detected local subnet: {target_range}[/yellow]")
+        net = ipaddress.ip_network(target_range, strict=False)
+        if net.prefixlen < 24:
+            console.print(
+                f"[bold red][!] Warning:[/bold red] You are scanning a large subnet ({target_range}). "
+                "This may take a long time and consume high system/network resources. Proceeding anyway..."
+            )
+    except:
+        console.print("[red][-] Invalid CIDR notation.[/red]")
+        return
+    scanner = nmap.PortScanner()
+    console.print(f"[yellow]\n[+] Performing ping scan on: {target_range}[/yellow]")
+    scanner.scan(hosts=target_range, arguments="-T4 -sn")
+    live_hosts = scanner.all_hosts()
+    if not live_hosts:
+        console.print("[-] No live hosts detected", style="red")
+        return
+    console.print(f"[green][+] {len(live_hosts)} live hosts found. Starting deep scan...\n")
+    with Progress() as progress:
+        task = progress.add_task("[bold blue]Scanning Hosts...", total=len(live_hosts))
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            futures = {executor.submit(scan_target, ip, mode, aggressive): ip for ip in live_hosts}
+            for future in as_completed(futures):
+                ip = futures[future]
+                try:
+                    result = future.result()
+                    console.print(f"[cyan]{ip}[/cyan]: Scan Done → [green]{result[1]}[/green]")
+                except Exception as e:
+                    log(f"Error scanning {ip}: {e}")
+                progress.update(task, advance=1)
+    if results_data:
+        with open("results.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=results_data[0].keys())
+            writer.writeheader()
+            writer.writerows(results_data)
+        with open(save_file, "w", encoding="utf-8") as jf:
+            json.dump(results_data, jf, indent=4)
+        table = Table(show_header=True, header_style="bold magenta")
+        for col in results_data[0].keys():
+            table.add_column(col, style="white", overflow="fold")
+        for r in results_data:
+            table.add_row(*[str(r[col]) for col in r])
+        console.print("\n[green][+] Scan Results:[/green]\n")
+        console.print(table)
+
+def interactive_mode():
     print_Banner()
     console.print("[bold blue]Interactive Mode (Beginner-Friendly)[/bold blue]")
-    target = console.input("[green]Enter Target CIDR or type 'auto' to scan local network (e.g. 192.168.1.0/24 or auto): [/green]")
+    target = console.input("[green]Enter Target CIDR or type 'auto': [/green]")
     mode = console.input("[green]Scan Mode? [tcp/udp/both] (default: tcp): [/green]") or "tcp"
     aggressive = console.input("[green]Aggressive Scan? [y/n] (default: n): [/green]").lower() == 'y'
     threads = console.input("[green]Max Threads? (default: 20): [/green]")
-    try:
-        threads = int(threads)
-    except:
-        threads = 20
-    scan_hosts(target, mode, aggressive, threads)
+    fresh = console.input("[green]Fresh Scan? [y/n] (default: n): [/green]").lower() == 'y'
+    try: threads = int(threads)
+    except: threads = 20
+    scan_network(target, mode, aggressive, threads, fresh)
 
-    
-if __name__== "__main__":
+
+def main():
+        interactive_mode()
+
+if __name__ == "__main__":
     main()
