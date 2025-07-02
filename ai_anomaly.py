@@ -141,5 +141,5 @@ model.fit(X_vec)
 # 4. Save
 joblib.dump(model, "ai_model.pkl")
 joblib.dump(vectorizer, "vectorizer.pkl")
-print("✅ AI model & vectorizer trained and saved.")
+print("AI model & vectorizer trained and saved.")
 print(f"→ Normal: {len(normal_samples)} | Anomalous: {len(anomalous_samples)}")
