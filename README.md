@@ -37,7 +37,7 @@ python ai_anomaly.py --evaluate
 ```
 ```bash
 #Optional: force retraining from fresh samples 
-Step 3: python ai_anomaly.py --retrain 
+python ai_anomaly.py --retrain 
 ```
 
 ## Interactive Mode :
