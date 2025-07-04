@@ -1,5 +1,4 @@
-# === Sn1p3rNetX+ (AI-Integrated Recon Scanner) ===
-import argparse, os, sys, re, ipaddress, subprocess, json, csv
+import argparse, os, sys, re, netifaces, ipaddress, subprocess, json, csv
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import init
@@ -144,9 +143,7 @@ def suggest_exploits(service_str):
         ("opc", "OPC-UA open port — vulnerable to replay/data theft"),
 
         ("metadata.google.internal", "CVE-2020-1350 (SSRF → Cloud creds)"),
-        ("aws_access_key", "Cloud Key Leak — critical cloud exposure"),
-
-        
+        ("aws_access_key", "Cloud Key Leak — critical cloud exposure"), 
     ]
     found = [v for k, v in known if k in service_str.lower()]
     try:
@@ -200,7 +197,15 @@ def scan_target(ip, mode='tcp', aggressive=False):
         os = smart_os_detection(info, vendor, open_port_nums, mac)
         alert = ai_detect_anomaly(ports, services)
         result = [ip, status, mac, vendor, os, ", ".join(ports), "\n".join(services), "\n".join(set(exploits)) or "None", alert]
-        results_data.append({"IP": ip, "Status": status, "MAC": mac, "Vendor": vendor, "OS": os, "Ports": ", ".join(ports), "Services": "\n".join(services), "Exploits": "\n".join(set(exploits)), "Alert": alert})
+        results_data.append({"IP": ip,
+                             "Status": status,
+                             "MAC": mac,
+                             "Vendor": vendor,
+                             "OS": os, "Ports": ", ".join(ports),
+                             "Services": "\n".join(services),
+                             "Exploits": "\n".join(set(exploits)),
+                             "Alert": alert
+                            })
         return result
     except Exception as e:
         log(f"[!] Error scanning {ip}: {e}")
