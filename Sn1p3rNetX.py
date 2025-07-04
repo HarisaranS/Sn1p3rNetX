@@ -32,7 +32,7 @@ except:
 def print_banner():
     f = Figlet(font='slant')
     console.print(f.renderText('Sn1p3rNetX+'), style="bold green")
-    console.print("[bold cyan]\tNetwork Reconnaissance with AI + Heuristics[/bold cyan]")
+    console.print("[bold cyan]\t  AI-Powered Network Recon Scanner[/bold cyan]  ")
     console.print("\t\t[bold red]>>>  by  $3r3N  <<<[/bold red]\n")
 
 def log(msg):
