@@ -1,5 +1,5 @@
 # === Sn1p3rNetX+ (AI-Integrated Recon Scanner) ===
-import argparse, os, sys, re, ipaddress, subprocess, json, csv,netifaces
+import argparse, os, sys, re, ipaddress, subprocess, json, csv
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import init
@@ -9,8 +9,6 @@ from pyfiglet import Figlet
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress
-from sklearn.ensemble import IsolationForest
-from sklearn.feature_extraction.text import CountVectorizer
 import joblib
 import nmap
 
@@ -35,7 +33,8 @@ except:
 def print_banner():
     f = Figlet(font='slant')
     console.print(f.renderText('Sn1p3rNetX+'), style="bold green")
-    console.print("[bold cyan]Advanced Network Recon with AI + Heuristics[/bold cyan]")
+    console.print("[bold cyan]\tNetwork Reconnaissance with AI + Heuristics[/bold cyan]")
+    console.print("\t\t[bold red]>>>  by  $3r3N  <<<[/bold red]\n")
 
 def log(msg):
     os.makedirs("logs", exist_ok=True)
