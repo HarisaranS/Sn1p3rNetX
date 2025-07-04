@@ -23,16 +23,16 @@ git clone https://github.com/HarisaranS/Sn1p3rNetX.git
 cd Sn1p3rNetX
 pip install -r requirements.txt
 ```
-**note: if pip installation fails, create a virtual environment or use,**
+**note: if pip installation fails, create a virtual environment or just use,**
 ```bash
 pip install -r requirements.txt --break-system-packages
 ```
-**All in one command:**
+use the above command at you own risk
+
+**All in one command:(easier installation)**
 ```bash
 git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip install -r requirements.txt --break-system-packages
 ```
-
-Requires: nmap, python3, pip, searchsploit (optional for CVE lookup)
 
 
 ## Usage
