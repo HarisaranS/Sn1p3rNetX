@@ -1,4 +1,4 @@
-## Sn1p3rNetX+ — AI-Powered Network Recon Scanner
+## Sn1p3rNetX+  AI-Powered Network Recon Scanner
 
 Sn1p3rNetX+ is an advanced AI-integrated network reconnaissance scanner that combines traditional scanning techniques with machine learning–based anomaly detection. 
 It’s built for offensive security experts, students, red teamers, and bug bounty hunters.
@@ -18,9 +18,11 @@ Performs recon, CVE mapping, OS fingerprinting, anomaly detection — all in one
 
 ## Installation
 
-git clone https://github.com/HarisaranS/Sn1p3rNetX.git \
-cd Sn1p3rNetX \
+```bash
+git clone https://github.com/HarisaranS/Sn1p3rNetX.git
+cd Sn1p3rNetX
 pip install -r requirements.txt
+```
 
 Requires: nmap, python3, pip, searchsploit (optional for CVE lookup)
 
@@ -28,21 +30,23 @@ Requires: nmap, python3, pip, searchsploit (optional for CVE lookup)
 
 ## Train the model : 
 
-python ai_anomaly.py \
-#Next runs: auto loads trained models \
+```bash
+python ai_anomaly.py 
+#Next runs: auto loads trained models 
 python ai_anomaly.py --evaluate 
 
-#Optional: force retraining from fresh samples \
+#Optional: force retraining from fresh samples 
 python ai_anomaly.py --retrain 
+```
 
 ## Interactive Mode :
-
+```bash
 python3 sn1pernetx.py
-
+```
 ## CLI Mode :
-
+```bash
 python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 30 --fresh
-
+```
 ## AI Anomaly Detection
 
 - Uses vectorized port/service data
