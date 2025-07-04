@@ -18,7 +18,7 @@ Performs recon, CVE mapping, OS fingerprinting, anomaly detection — all in one
 
 ## Installation
 
-```javascript
+```yaml
 git clone https://github.com/HarisaranS/Sn1p3rNetX.git
 cd Sn1p3rNetX
 pip install -r requirements.txt
