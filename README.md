@@ -29,7 +29,7 @@ pip install -r requirements.txt --break-system-packages
 ```
 use the above command at you own risk
 
-**All in one command:(easier installation)**
+**All in one command (easier installation):**
 ```bash
 git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip install -r requirements.txt --break-system-packages
 ```
