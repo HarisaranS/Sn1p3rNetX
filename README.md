@@ -58,7 +58,7 @@ python3 sn1pernetx.py
 ```
 ## CLI Mode(Pro) :
 ```bash
-python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 30 --fresh
+python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 50 --fresh
 ```
 ## AI Anomaly Detection
 
