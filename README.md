@@ -54,11 +54,11 @@ python ai_anomaly.py --retrain
 
 ## Interactive Mode(Recommended) :
 ```bash
-python3 sn1pernetx.py
+python3 Sn1p3rNetX.py
 ```
 ## CLI Mode(Pro) :
 ```bash
-python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 50 --fresh
+python3 Sn1p3rNetX.py --target <target> --mode tcp --aggressive --threads 50 --fresh
 ```
 ## AI Anomaly Detection
 
