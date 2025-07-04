@@ -23,20 +23,32 @@ git clone https://github.com/HarisaranS/Sn1p3rNetX.git
 cd Sn1p3rNetX
 pip install -r requirements.txt
 ```
+**note: if pip installation fails, create a virtual environment or use,**
+```bash
+pip install -r requirements.txt --break-system-packages
+```
+**All in one command:**
+```bash
+git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip install -r requirements.txt --break-system-packages
+```
 
 Requires: nmap, python3, pip, searchsploit (optional for CVE lookup)
 
+
 ## Usage
 
-## Train the model : 
-
+## First Step (Important)
+**Train the model :**
+## Step 1
 ```bash
-python ai_anomaly.py 
-#Next runs: auto loads trained models 
+python ai_anomaly.py
+```
+## Step 2
+```bash 
 python ai_anomaly.py --evaluate 
 ```
+## Step 3 (Optional)
 ```bash
-#Optional: force retraining from fresh samples 
 python ai_anomaly.py --retrain 
 ```
 
