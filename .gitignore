@@ -1,2 +1,9 @@
 __pycache__/
+*.pyc
+*.pkl
+*.log
 logs/
+results.json
+*.csv
+.mac_cache.json
+.env
