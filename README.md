@@ -41,7 +41,7 @@ python3 sn1pernetx.py
 
 ## CLI Mode :
 
-python3 sn1pernetx.py --target 192.168.1.0/24 --mode tcp --aggressive --threads 30 --fresh
+python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 30 --fresh
 
 ## AI Anomaly Detection
 
