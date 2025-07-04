@@ -52,11 +52,11 @@ python ai_anomaly.py --evaluate
 python ai_anomaly.py --retrain 
 ```
 
-## Interactive Mode :
+## Interactive Mode(Recommended) :
 ```bash
 python3 sn1pernetx.py
 ```
-## CLI Mode :
+## CLI Mode(Pro) :
 ```bash
 python3 sn1pernetx.py --target <target> --mode tcp --aggressive --threads 30 --fresh
 ```
