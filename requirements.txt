@@ -9,3 +9,4 @@ python-nmap
 pyfiglet
 rich
 scikit-learn
+netifaces
