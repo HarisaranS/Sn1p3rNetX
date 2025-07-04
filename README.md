@@ -18,19 +18,19 @@ Performs recon, CVE mapping, OS fingerprinting, anomaly detection — all in one
 
 ## Installation
 
-```html
+```yaml
 git clone https://github.com/HarisaranS/Sn1p3rNetX.git
 cd Sn1p3rNetX
 pip install -r requirements.txt
 ```
 **note: if pip installation fails, create a virtual environment or just use,**
-```python
+```yaml
 pip install -r requirements.txt --break-system-packages
 ```
 use the above command at you own risk
 
 **All in one command (easier installation):**
-```python
+```yaml
 git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip install -r requirements.txt --break-system-packages
 ```
 
@@ -40,24 +40,24 @@ git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip i
 ## First Step (Important)
 **Train the model :**
 ## Step 1
-```python
+```yaml
 python ai_anomaly.py
 ```
 ## Step 2
-```python 
+```yaml 
 python ai_anomaly.py --evaluate 
 ```
 ## Step 3 (Optional)
-```python
+```yaml
 python ai_anomaly.py --retrain 
 ```
 
 ## Interactive Mode(Recommended) :
-```python
+```yaml
 python3 Sn1p3rNetX.py
 ```
 ## CLI Mode(Pro) :
-```python
+```yaml
 python3 Sn1p3rNetX.py --target <target> --mode tcp --aggressive --threads 50 --fresh
 ```
 ## AI Anomaly Detection
