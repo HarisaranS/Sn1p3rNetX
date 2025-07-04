@@ -31,10 +31,11 @@ Requires: nmap, python3, pip, searchsploit (optional for CVE lookup)
 ## Train the model : 
 
 ```bash
-Step 1: python ai_anomaly.py 
+python ai_anomaly.py 
 #Next runs: auto loads trained models 
-Step 2: python ai_anomaly.py --evaluate 
-
+python ai_anomaly.py --evaluate 
+```
+```bash
 #Optional: force retraining from fresh samples 
 Step 3: python ai_anomaly.py --retrain 
 ```
