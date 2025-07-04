@@ -5,7 +5,7 @@ getmac
 ipaddress
 joblib
 mac-vendor-lookup
-nmap
+python-nmap
 pyfiglet
 rich
 scikit-learn
