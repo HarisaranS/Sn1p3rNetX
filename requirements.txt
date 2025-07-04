@@ -1,0 +1,11 @@
+argparse
+colorama
+concurrent-log-handler
+getmac
+ipaddress
+joblib
+mac-vendor-lookup
+nmap
+pyfiglet
+rich
+scikit-learn
