@@ -33,7 +33,7 @@ def print_banner():
     f = Figlet(font='slant')
     console.print(f.renderText('Sn1p3rNetX+'), style="bold green")
     console.print("[bold cyan]\t  AI-Powered Network Recon Scanner[/bold cyan]  ")
-    console.print("\t\t[bold red]>>>  by  $aRaN  <<<[/bold red]\n")
+    console.print("\t\t[bold red]>>>  by  Xarqθon_∞.  <<<[/bold red]\n")
 
 def log(msg):
     os.makedirs("logs", exist_ok=True)
