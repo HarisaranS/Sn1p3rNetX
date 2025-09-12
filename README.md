@@ -31,7 +31,7 @@ use the above command at you own risk
 
 **All in one command (easier installation):**
 ```yaml
-git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && pip install -r requirements.txt --break-system-packages
+git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && sudo pip install -r requirements.txt --break-system-packages
 ```
 
 
