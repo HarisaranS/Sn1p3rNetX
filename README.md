@@ -41,15 +41,15 @@ git clone https://github.com/HarisaranS/Sn1p3rNetX.git && cd Sn1p3rNetX && sudo 
 **Train the model :**
 ## Step 1
 ```yaml
-python ai_anomaly.py
+python3 ai_anomaly.py
 ```
 ## Step 2
 ```yaml 
-python ai_anomaly.py --evaluate 
+python3 ai_anomaly.py --evaluate 
 ```
 ## Step 3 (Optional)
 ```yaml
-python ai_anomaly.py --retrain 
+python3 ai_anomaly.py --retrain 
 ```
 
 ## Interactive Mode(Recommended) :
@@ -74,5 +74,5 @@ sudo python3 Sn1p3rNetX.py --target <target> --mode tcp --aggressive --threads 5
 
 ## Credits
 
-- Developed by $3r3N — Cyber security
+- Developed by saran — Cyber security
 - Contributions welcome via Pull Requests
