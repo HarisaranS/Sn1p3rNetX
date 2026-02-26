@@ -1,0 +1,12 @@
+argparse
+colorama
+concurrent-log-handler
+getmac
+ipaddress
+mac-vendor-lookup
+python-nmap
+pyfiglet
+rich
+netifaces
+openai
+fpdf2
