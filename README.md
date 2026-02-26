@@ -1,5 +1,13 @@
-# Sn1p3rNetX
-### AI-Powered Network Risk Intelligence & Recon Scanner
+```bash
+ ____        _      _____      _   _      _  __  __
+/ ___| _ __ / |_ __|___ / _ __| \ | | ___| |_\ \/ /
+\___ \| '_ \| | '_ \ |_ \| '__|  \| |/ _ \ __|\  / 
+ ___) | | | | | |_) |__) | |  | |\  |  __/ |_ /  \ 
+|____/|_| |_|_| .__/____/|_|  |_| \_|\___|\__/_/\_\
+              |_|                                  
+ 
+  <<< AI-Powered Network Risk Intelligence  >>>
+```
 
 **Sn1p3rNetX** is a professional-grade, modular network reconnaissance tool that combines the raw power of **Network Scanning** with contextual **AI Analysis**. It doesn't just find open ports; it understands what they mean for your security posture.
 
