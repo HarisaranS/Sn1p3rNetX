@@ -24,7 +24,7 @@ def get_mac(ip):
     mac = get_mac_address(ip=ip)
     if not mac:
         try:
-            output = subprocess.check_output(f"arp -a {ip}", shell=True, stderr=subprocess.DEVNULL).decode()
+            output = subprocess.check_output(["arp", "-a", ip], stderr=subprocess.DEVNULL).decode()
             mac_match = re.search(r"([\da-fA-F]{2}[:-]){5}[\da-fA-F]{2}", output)
             mac = mac_match.group(0) if mac_match else None
         except:

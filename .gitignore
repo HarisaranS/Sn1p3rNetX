@@ -8,3 +8,10 @@ results.json
 .mac_cache.json
 .env
 .DS_Store
+api_key.txt
+.disclaimer_accepted
+.venv/
+reports/output/
+sn1p3rnetx_history.db
+sn1p3rnetx_report_*.json
+sn1p3rnetx_report_*.html

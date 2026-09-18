@@ -1,12 +1,28 @@
-argparse
-colorama
-concurrent-log-handler
-getmac
-ipaddress
-mac-vendor-lookup
-python-nmap
-pyfiglet
-rich
-netifaces
-openai
-fpdf2
+# Sn1p3rNetX v3.0 — Requirements
+# Install with: pip install -r requirements.txt
+
+# ── Core scanning ──────────────────────────────────────────────────────────────
+python-nmap>=0.7.1
+netifaces>=0.11.0
+getmac>=0.9.0
+mac-vendor-lookup>=0.1.12
+
+# ── Network / IP utilities ─────────────────────────────────────────────────────
+ipaddress>=1.0.23
+
+# ── CLI / UI ───────────────────────────────────────────────────────────────────
+rich>=13.7.0
+pyfiglet>=1.0.2
+colorama>=0.4.6
+
+# ── AI / LLM ──────────────────────────────────────────────────────────────────
+openai>=1.30.0
+
+# ── Reporting ─────────────────────────────────────────────────────────────────
+fpdf2>=2.7.9
+
+# ── Configuration ─────────────────────────────────────────────────────────────
+python-dotenv>=1.0.1
+
+# ── Optional (for real CVE lookups) ───────────────────────────────────────────
+# nvdlib>=0.7.6          # pip install nvdlib  (NVD API v2)
