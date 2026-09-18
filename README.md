@@ -1,10 +1,11 @@
-<div align="center">
-  <img src="https://img.icons8.com/color/96/000000/radar.png" alt="logo"/>
-  <h1>Sn1p3rNetX</h1>
-  <p><strong>AI-Powered Network Security Intelligence Platform (NSIP)</strong></p>
-</div>
-
----
+```bash
+                                      ____        _      _____      _   _      _  __  __
+                                     / ___| _ __ / |_ __|___ / _ __| \ | | ___| |_\ \/ /
+                                     \___ \| '_ \| | '_ \ |_ \| '__|  \| |/ _ \ __|\  / 
+                                      ___) | | | | | |_) |__) | |  | |\  |  __/ |_ /  \ 
+                                     |____/|_| |_|_| .__/____/|_|  |_| \_|\___|\__/_/\_\
+                                                   |_|                                  
+```
 
 Sn1p3rNetX is a comprehensive, AI-driven Network Security Intelligence Platform. It goes beyond simple port scanning to provide board-ready business risk translation, automatic remediation scripting, compliance mapping, network drift detection, and interactive live dashboards.
 
