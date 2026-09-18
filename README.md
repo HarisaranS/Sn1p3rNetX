@@ -1,12 +1,12 @@
 <div align="center">
   <img src="https://img.icons8.com/color/96/000000/radar.png" alt="logo"/>
-  <h1>Sn1p3rNetX Enterprise</h1>
+  <h1>Sn1p3rNetX</h1>
   <p><strong>AI-Powered Network Security Intelligence Platform (NSIP)</strong></p>
 </div>
 
 ---
 
-Sn1p3rNetX Enterprise is a comprehensive, AI-driven Network Security Intelligence Platform. It goes beyond simple port scanning to provide board-ready business risk translation, automatic remediation scripting, compliance mapping, network drift detection, and interactive live dashboards.
+Sn1p3rNetX is a comprehensive, AI-driven Network Security Intelligence Platform. It goes beyond simple port scanning to provide board-ready business risk translation, automatic remediation scripting, compliance mapping, network drift detection, and interactive live dashboards.
 
 ##  Features
 
